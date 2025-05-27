@@ -1,0 +1,336 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../config/api';
+
+interface Video {
+  _id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  category: string;
+  views: number;
+  likes: number;
+  createdAt: string;
+}
+
+const Profile: React.FC = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('videos');
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({
+    totalVideos: 0,
+    totalViews: 0,
+    totalLikes: 0,
+    avgViews: 0
+  });
+
+  useEffect(() => {
+    fetchUserVideos();
+  }, []);
+
+  const fetchUserVideos = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getMyVideos();
+      console.log('Videos response:', response);
+      
+      const userVideos = response.videos || [];
+      setVideos(userVideos);
+      
+      // Calculate stats
+      const totalVideos = userVideos.length;
+      const totalViews = userVideos.reduce((sum: number, video: Video) => sum + (video.views || 0), 0);
+      const totalLikes = userVideos.reduce((sum: number, video: Video) => sum + (video.likes || 0), 0);
+      const avgViews = totalVideos > 0 ? Math.round(totalViews / totalVideos) : 0;
+      
+      setStats({ totalVideos, totalViews, totalLikes, avgViews });
+    } catch (error) {
+      console.error('Error fetching videos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const formatViews = (views: number) => {
+    if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
+    if (views >= 1000) return `${(views / 1000).toFixed(1)}K`;
+    return views.toString();
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const icons: { [key: string]: string } = {
+      lifestyle: '🌟',
+      beauty: '💄',
+      fashion: '👗',
+      fitness: '💪',
+      food: '🍕',
+      travel: '✈️',
+      tech: '📱',
+      gaming: '🎮'
+    };
+    return icons[category] || '🎬';
+  };
+
+  const tabs = [
+    { id: 'videos', label: 'My Videos', icon: '🎥', count: stats.totalVideos },
+    { id: 'analytics', label: 'Analytics', icon: '📊', count: null },
+    { id: 'settings', label: 'Settings', icon: '⚙️', count: null }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pt-20">
+      {/* Floating Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-3/4 left-3/4 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        {/* Profile Header */}
+        <div className="bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 p-8 mb-8 shadow-2xl">
+          <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-32 h-32 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-5xl shadow-2xl">
+                {user?.avatar ? (
+                  <img 
+                    src={user.avatar} 
+                    alt="Avatar" 
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span>👤</span>
+                )}
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-lg">
+                ✨
+              </div>
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-4xl font-bold text-white mb-2">
+                {user?.firstName} {user?.lastName}
+              </h1>
+              <p className="text-xl text-purple-300 mb-4">
+                @{user?.firstName?.toLowerCase()}{user?.lastName?.toLowerCase()} • {user?.userType}
+              </p>
+              <p className="text-gray-300 max-w-2xl">
+                {user?.bio || "Creative content creator sharing amazing experiences with the world 🎬✨"}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-4">
+              <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:shadow-xl hover:shadow-purple-500/25 transition-all duration-300 transform hover:scale-105">
+                📝 Edit Profile
+              </button>
+              <button className="px-6 py-3 bg-white/10 border border-white/20 text-white rounded-xl hover:bg-white/20 transition-all duration-300">
+                📤 Share
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {[
+            { label: 'Videos', value: stats.totalVideos, icon: '🎥', color: 'from-purple-600 to-blue-600' },
+            { label: 'Total Views', value: formatViews(stats.totalViews), icon: '👁️', color: 'from-blue-600 to-cyan-600' },
+            { label: 'Total Likes', value: formatViews(stats.totalLikes), icon: '❤️', color: 'from-pink-600 to-red-600' },
+            { label: 'Avg Views', value: formatViews(stats.avgViews), icon: '📈', color: 'from-green-600 to-emerald-600' }
+          ].map((stat, index) => (
+            <div 
+              key={index}
+              className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 p-6 text-center hover:border-purple-500/50 transition-all duration-300"
+            >
+              <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center text-2xl mx-auto mb-4`}>
+                {stat.icon}
+              </div>
+              <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
+              <div className="text-gray-400 text-sm">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex space-x-1 mb-8 bg-black/20 p-1 rounded-2xl backdrop-blur-sm">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex items-center justify-center space-x-3 py-4 px-6 rounded-xl transition-all duration-300 ${
+                activeTab === tab.id
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span className="text-xl">{tab.icon}</span>
+              <span className="font-medium">{tab.label}</span>
+              {tab.count !== null && (
+                <span className={`px-2 py-1 text-xs rounded-full ${
+                  activeTab === tab.id ? 'bg-white/20' : 'bg-gray-600'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-2xl min-h-[400px]">
+          {activeTab === 'videos' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-white">My Videos</h2>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={fetchUserVideos}
+                    className="px-4 py-2 bg-purple-600/20 text-purple-300 rounded-lg hover:bg-purple-600/30 transition-colors flex items-center space-x-2"
+                  >
+                    <span>🔄</span>
+                    <span>Refresh</span>
+                  </button>
+                  <a
+                    href="/upload"
+                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <span>📹</span>
+                    <span>Upload New</span>
+                  </a>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                    <span className="text-xl text-gray-300">Loading your amazing content...</span>
+                  </div>
+                </div>
+              ) : videos.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {videos.map((video) => (
+                    <div 
+                      key={video._id} 
+                      className="group bg-gray-800/30 rounded-2xl overflow-hidden border border-white/10 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl"
+                    >
+                      {/* Video Thumbnail */}
+                      <div className="aspect-video bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center relative overflow-hidden">
+                        {video.thumbnailUrl ? (
+                          <img 
+                            src={video.thumbnailUrl} 
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="text-center">
+                            <div className="text-5xl mb-2">{getCategoryIcon(video.category)}</div>
+                            <div className="text-gray-400 font-medium">{video.title}</div>
+                          </div>
+                        )}
+                        
+                        {/* Play Button Overlay */}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <div className="text-2xl">▶️</div>
+                          </div>
+                        </div>
+
+                        {/* Category Badge */}
+                        <div className="absolute top-3 left-3 px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-sm text-white flex items-center space-x-1">
+                          <span>{getCategoryIcon(video.category)}</span>
+                          <span className="capitalize">{video.category}</span>
+                        </div>
+
+                        {/* Stats Overlay */}
+                        <div className="absolute bottom-3 right-3 flex space-x-3">
+                          <div className="flex items-center space-x-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white">
+                            <span>👁️</span>
+                            <span>{formatViews(video.views || 0)}</span>
+                          </div>
+                          <div className="flex items-center space-x-1 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white">
+                            <span>❤️</span>
+                            <span>{formatViews(video.likes || 0)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Video Info */}
+                      <div className="p-6">
+                        <h3 className="font-bold text-white text-lg mb-2 line-clamp-2 group-hover:text-purple-300 transition-colors">
+                          {video.title}
+                        </h3>
+                        <p className="text-gray-400 text-sm mb-4 line-clamp-2">{video.description}</p>
+                        
+                        <div className="flex justify-between items-center text-xs text-gray-500">
+                          <span>📅 {formatDate(video.createdAt)}</span>
+                          <div className="flex space-x-3">
+                            <button className="hover:text-purple-400 transition-colors">✏️ Edit</button>
+                            <button className="hover:text-red-400 transition-colors">🗑️ Delete</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20">
+                  <div className="text-8xl mb-6">🎬</div>
+                  <h3 className="text-3xl font-bold text-white mb-4">Ready to create amazing content?</h3>
+                  <p className="text-gray-400 text-lg mb-8 max-w-md mx-auto">
+                    Upload your first video and start building your audience today!
+                  </p>
+                  <a
+                    href="/upload"
+                    className="inline-flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 transform hover:scale-105 text-lg font-semibold"
+                  >
+                    <span>🚀</span>
+                    <span>Upload Your First Video</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Analytics Tab */}
+          {activeTab === 'analytics' && (
+            <div className="text-center py-20">
+              <div className="text-8xl mb-6">📊</div>
+              <h3 className="text-3xl font-bold text-white mb-4">Analytics Dashboard</h3>
+              <p className="text-gray-400 text-lg">
+                Detailed analytics and insights coming soon!
+              </p>
+            </div>
+          )}
+
+          {/* Settings Tab */}
+          {activeTab === 'settings' && (
+            <div className="text-center py-20">
+              <div className="text-8xl mb-6">⚙️</div>
+              <h3 className="text-3xl font-bold text-white mb-4">Profile Settings</h3>
+              <p className="text-gray-400 text-lg">
+                Profile customization options coming soon!
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;

@@ -1,0 +1,10 @@
+/register*   /index.html   200
+/login*      /index.html   200
+/dashboard*  /index.html   200
+/upload*     /index.html   200
+/messages*   /index.html   200
+/analytics*  /index.html   200
+/profile*    /index.html   200
+/discovery*  /index.html   200
+/create-campaign* /index.html   200
+/*           /index.html   200

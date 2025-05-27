@@ -1,0 +1,69 @@
+// src/services/videoService.ts
+
+/**
+ * Uploads a video to the server
+ * @param formData FormData containing the video and metadata
+ * @returns Promise that resolves when the upload is complete
+ */
+export const uploadVideo = async (formData: FormData): Promise<any> => {
+  // For now, this is a mock implementation
+  // Replace with actual API call when backend is ready
+  
+  // Simulate API delay
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log('Video upload data:', Object.fromEntries(formData.entries()));
+      resolve({ success: true, videoId: 'mock-video-id-' + Date.now() });
+    }, 2000); // Simulate 2 second upload
+  });
+};
+
+/**
+ * Get video analytics
+ * @param videoId ID of the video
+ * @returns Promise with video analytics data
+ */
+export const getVideoAnalytics = async (videoId: string): Promise<any> => {
+  // Mock implementation
+  return {
+    views: Math.floor(Math.random() * 10000),
+    likes: Math.floor(Math.random() * 500),
+    shares: Math.floor(Math.random() * 100),
+    comments: Math.floor(Math.random() * 50),
+    averageWatchTime: Math.floor(Math.random() * 180) + 30, // in seconds
+  };
+};
+
+/**
+ * Get list of user's videos
+ * @returns Promise with array of videos
+ */
+export const getUserVideos = async (): Promise<any[]> => {
+  // Mock implementation
+  return [
+    {
+      id: 'video-1',
+      title: 'My First Video',
+      thumbnail: 'https://via.placeholder.com/640x360',
+      duration: '2:30',
+      views: 1250,
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'video-2',
+      title: 'Product Demo',
+      thumbnail: 'https://via.placeholder.com/640x360',
+      duration: '5:45',
+      views: 3680,
+      createdAt: new Date(Date.now() - 86400000).toISOString(), // yesterday
+    },
+    {
+      id: 'video-3',
+      title: 'Tutorial: How to Use Our Platform',
+      thumbnail: 'https://via.placeholder.com/640x360',
+      duration: '12:18',
+      views: 9520,
+      createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+    },
+  ];
+};
