@@ -1,6 +1,5 @@
 // API Configuration
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
-
+export const API_BASE_URL = 'http://localhost:5001/api';
 // API Endpoints
 export const API_ENDPOINTS = {
   // Health check
@@ -158,7 +157,7 @@ class ApiService {
 
   async logout() {
     localStorage.removeItem('token');
-    localStorage.removeUser('user');
+    localStorage.removeItem('user');
   }
 
   // User methods
