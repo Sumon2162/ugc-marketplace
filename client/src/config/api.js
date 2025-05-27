@@ -1,5 +1,5 @@
-// API Configuration
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+// API Configuration - Hardcoded production URL
+export const API_BASE_URL = 'https://ugc-marketplace.onrender.com/api';
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -53,12 +53,10 @@ class ApiService {
     this.baseURL = API_BASE_URL;
   }
 
-  // Get auth token from localStorage
   getAuthToken() {
     return localStorage.getItem('token');
   }
 
-  // Get auth headers
   getAuthHeaders() {
     const token = this.getAuthToken();
     return {
@@ -67,7 +65,6 @@ class ApiService {
     };
   }
 
-  // Generic API request method
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
@@ -83,7 +80,6 @@ class ApiService {
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      // Handle empty responses
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         return await response.json();
@@ -96,12 +92,10 @@ class ApiService {
     }
   }
 
-  // GET request
   async get(endpoint) {
     return this.request(endpoint, { method: 'GET' });
   }
 
-  // POST request
   async post(endpoint, data) {
     return this.request(endpoint, {
       method: 'POST',
@@ -109,7 +103,6 @@ class ApiService {
     });
   }
 
-  // PUT request
   async put(endpoint, data) {
     return this.request(endpoint, {
       method: 'PUT',
@@ -117,12 +110,10 @@ class ApiService {
     });
   }
 
-  // DELETE request
   async delete(endpoint) {
     return this.request(endpoint, { method: 'DELETE' });
   }
 
-  // Upload file (for videos/images)
   async upload(endpoint, formData) {
     const token = this.getAuthToken();
     const headers = {};
@@ -137,7 +128,6 @@ class ApiService {
     });
   }
 
-  // Authentication methods
   async login(email, password) {
     const response = await this.post(API_ENDPOINTS.auth.login, { email, password });
     if (response.token) {
@@ -158,10 +148,9 @@ class ApiService {
 
   async logout() {
     localStorage.removeItem('token');
-    localStorage.removeUser('user');
+    localStorage.removeItem('user');
   }
 
-  // User methods
   async getUserProfile() {
     return this.get(API_ENDPOINTS.user.profile);
   }
@@ -170,7 +159,6 @@ class ApiService {
     return this.put(API_ENDPOINTS.user.profile, userData);
   }
 
-  // Video methods
   async uploadVideo(formData) {
     return this.upload(API_ENDPOINTS.videos.upload, formData);
   }
@@ -185,7 +173,6 @@ class ApiService {
     return this.get(`${API_ENDPOINTS.videos.all}?${params}`);
   }
 
-  // Campaign methods
   async createCampaign(campaignData) {
     return this.post(API_ENDPOINTS.campaigns.create, campaignData);
   }
@@ -200,7 +187,6 @@ class ApiService {
     return this.post(API_ENDPOINTS.campaigns.apply(campaignId), { proposal });
   }
 
-  // Creator methods
   async discoverCreators(filters = {}) {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -209,7 +195,6 @@ class ApiService {
     return this.get(`${API_ENDPOINTS.creators.discover}?${params}`);
   }
 
-  // Messaging methods
   async getMatches() {
     return this.get(API_ENDPOINTS.messages.matches);
   }
@@ -222,19 +207,14 @@ class ApiService {
     return this.post(API_ENDPOINTS.messages.send, { matchId, content });
   }
 
-  // Analytics methods
   async getAnalytics() {
     return this.get(API_ENDPOINTS.analytics);
   }
 
-  // Health check
   async checkHealth() {
     return this.get(API_ENDPOINTS.health);
   }
 }
 
-// Create and export API service instance
 export const apiService = new ApiService();
-
-// Export default for easy importing
 export default apiService;
